@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+sqlalchemy>=2.0
+pydantic>=2.0
+pydantic[email]
+email-validator
+pydantic-settings
+python-dotenv
+apscheduler
+jinja2
+beautifulsoup4
+itsdangerous
+python-multipart

@@ -1,0 +1,13 @@
+services:
+  dripbox:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - backend/.env
+    volumes:
+      - dripbox-data:/app/backend/data
+    restart: unless-stopped
+
+volumes:
+  dripbox-data:

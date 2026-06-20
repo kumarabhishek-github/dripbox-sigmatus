@@ -1,0 +1,53 @@
+name: Deploy to GCP VM (example)
+
+# Example deploy pipeline for a single GCP Compute Engine VM. It is manual-only
+# (workflow_dispatch) so a fresh fork/clone never auto-deploys. To use it:
+#   1. Create a deploy service account and add its JSON key as the GCP_SA_KEY
+#      repo secret (see deploy/setup_github_actions.sh).
+#   2. Set the GCP_PROJECT / GCP_ZONE / GCP_INSTANCE values below.
+#   3. Optionally re-enable the push trigger by uncommenting the block below.
+on:
+  workflow_dispatch: {}
+  # push:
+  #   branches: [main]
+
+# Don't run multiple deploys in parallel. If a deploy is mid-flight when a new
+# push lands, queue the new one and let the current finish.
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      GCP_PROJECT: your-gcp-project
+      GCP_ZONE: us-central1-a
+      GCP_INSTANCE: dripbox
+      # gcloud reads this to skip interactive prompts in CI.
+      CLOUDSDK_CORE_DISABLE_PROMPTS: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      # gcloud compute ssh needs an OS Login profile for the service account.
+      # The first SSH against the project auto-provisions one; we trigger that
+      # explicitly so deploy.sh doesn't fail on the cold start.
+      - name: Warm OS Login profile
+        run: |
+          gcloud compute ssh "$GCP_INSTANCE" \
+            --project "$GCP_PROJECT" --zone "$GCP_ZONE" \
+            --command "echo ok" \
+            --quiet
+
+      - name: Run deploy script
+        run: ./deploy/deploy.sh
