@@ -30,6 +30,9 @@ export interface Contact {
   id: number;
   email: string;
   name: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  business_name?: string | null;
   stage: Stage;
   source: string | null;
   custom_fields: Record<string, unknown> | null;

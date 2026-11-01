@@ -35,6 +35,9 @@ def _string_env(autoescape: bool) -> Environment:
 def _context(contact: Contact) -> dict:
     ctx = {
         "name": contact.name or "",
+        "first_name": contact.first_name or "",
+        "last_name": contact.last_name or "",
+        "business_name": contact.business_name or "",
         "email": contact.email,
         "unsubscribe_keyword": settings.UNSUBSCRIBE_KEYWORD,
     }

@@ -18,6 +18,9 @@ class ORMBase(BaseModel):
 class ContactCreate(BaseModel):
     email: EmailStr
     name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    business_name: Optional[str] = None
     custom_fields: dict[str, Any] = {}
     stage: ContactStage = ContactStage.new
     source: Optional[str] = None
@@ -25,6 +28,9 @@ class ContactCreate(BaseModel):
 
 class ContactUpdate(BaseModel):
     name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    business_name: Optional[str] = None
     custom_fields: Optional[dict[str, Any]] = None
     stage: Optional[ContactStage] = None
     registered_at: Optional[datetime] = None
@@ -35,13 +41,32 @@ class ContactUpdate(BaseModel):
 class ContactOut(ORMBase):
     id: int
     email: str
-    name: Optional[str]
+    name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    business_name: Optional[str] = None
     custom_fields: dict[str, Any]
     stage: ContactStage
     registered_at: Optional[datetime]
     unsubscribed: bool
     source: Optional[str]
     created_at: datetime
+
+
+class ContactImportItem(BaseModel):
+    email: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    business_name: Optional[str] = None
+
+
+class ContactImportRequest(BaseModel):
+    contacts: list[ContactImportItem]
+
+
+class ContactImportResponse(BaseModel):
+    imported: int
+    skipped: int
 
 
 # Template

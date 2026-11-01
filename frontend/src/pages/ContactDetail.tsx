@@ -20,43 +20,78 @@ const EVENT_LABEL: Record<EventType, { label: string; dot: string }> = {
 
 function ContactFieldsCard({
   contactId,
-  initialName,
+  initialFirstName,
+  initialLastName,
+  initialBusinessName,
   initialSource,
 }: {
   contactId: number;
-  initialName: string;
+  initialFirstName: string;
+  initialLastName: string;
+  initialBusinessName: string;
   initialSource: string;
 }) {
   const queryClient = useQueryClient();
-  const [name, setName] = useState(initialName);
+  const [firstName, setFirstName] = useState(initialFirstName);
+  const [lastName, setLastName] = useState(initialLastName);
+  const [businessName, setBusinessName] = useState(initialBusinessName);
   const [source, setSource] = useState(initialSource);
 
   useEffect(() => {
-    setName(initialName);
+    setFirstName(initialFirstName);
+    setLastName(initialLastName);
+    setBusinessName(initialBusinessName);
     setSource(initialSource);
-  }, [initialName, initialSource]);
+  }, [initialFirstName, initialLastName, initialBusinessName, initialSource]);
 
   const mut = useMutation({
     mutationFn: () =>
-      patchContact(contactId, { name: name.trim(), source: source.trim() }),
+      patchContact(contactId, {
+        first_name: firstName.trim() || undefined,
+        last_name: lastName.trim() || undefined,
+        business_name: businessName.trim() || undefined,
+        source: source.trim() || undefined,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contact', contactId] });
       queryClient.invalidateQueries({ queryKey: ['contacts'] });
     },
   });
 
-  const dirty = name !== initialName || source !== initialSource;
+  const dirty =
+    firstName !== initialFirstName ||
+    lastName !== initialLastName ||
+    businessName !== initialBusinessName ||
+    source !== initialSource;
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-5">
       <h2 className="text-sm font-semibold text-gray-900 mb-3">Details</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Name</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">First Name</label>
           <input
             type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            className="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Last Name</label>
+          <input
+            type="text"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            className="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Business Name</label>
+          <input
+            type="text"
+            value={businessName}
+            onChange={(e) => setBusinessName(e.target.value)}
             className="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm"
           />
         </div>
@@ -141,7 +176,10 @@ export default function ContactDetail() {
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-semibold text-gray-900">
-              {contact.name || contact.email}
+              {[contact.first_name, contact.last_name].filter(Boolean).join(' ') ||
+                contact.name ||
+                contact.business_name ||
+                contact.email}
             </h1>
             <StageBadge stage={contact.stage} />
             {contact.unsubscribed ? (
@@ -150,13 +188,24 @@ export default function ContactDetail() {
               </span>
             ) : null}
           </div>
-          <div className="text-sm text-gray-500 mt-1">{contact.email}</div>
+          <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+            <span>{contact.email}</span>
+            {contact.business_name &&
+            (contact.first_name || contact.last_name || contact.name) ? (
+              <>
+                <span>·</span>
+                <span className="font-medium text-gray-700">{contact.business_name}</span>
+              </>
+            ) : null}
+          </div>
         </div>
       </div>
 
       <ContactFieldsCard
         contactId={contactId}
-        initialName={contact.name || ''}
+        initialFirstName={contact.first_name || ''}
+        initialLastName={contact.last_name || ''}
+        initialBusinessName={contact.business_name || ''}
         initialSource={contact.source || ''}
       />
 

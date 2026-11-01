@@ -20,6 +20,9 @@ _ADDITIVE: list[tuple[str, str, str]] = [
     ("enrollments", "stage", "VARCHAR(32) NOT NULL DEFAULT 'pending'"),
     ("campaigns", "thread_emails", "BOOLEAN NOT NULL DEFAULT 0"),
     ("scheduled_sends", "sent_subject", "TEXT"),
+    ("contacts", "first_name", "VARCHAR(255)"),
+    ("contacts", "last_name", "VARCHAR(255)"),
+    ("contacts", "business_name", "VARCHAR(255)"),
 ]
 
 
@@ -50,6 +53,25 @@ def apply_migrations(engine: Engine) -> None:
                     text("UPDATE enrollments SET stage = :new WHERE stage = :old"),
                     {"new": new, "old": old},
                 )
+
+        # Backfill first_name and last_name from name for existing contacts
+        if insp.has_table("contacts"):
+            conn.execute(
+                text(
+                    """
+                    UPDATE contacts 
+                    SET first_name = CASE 
+                        WHEN instr(trim(name), ' ') > 0 THEN substr(trim(name), 1, instr(trim(name), ' ') - 1)
+                        ELSE trim(name)
+                    END,
+                    last_name = CASE 
+                        WHEN instr(trim(name), ' ') > 0 THEN substr(trim(name), instr(trim(name), ' ') + 1)
+                        ELSE NULL
+                    END
+                    WHERE first_name IS NULL AND name IS NOT NULL AND trim(name) != ''
+                    """
+                )
+            )
 
         # file_path was NOT NULL in original schema. SQLite can't drop NOT NULL
         # cleanly, so we just stop enforcing it at the ORM layer; existing rows

@@ -62,8 +62,28 @@ export const listSources = () =>
 export const createContact = (body: {
   email: string;
   name?: string;
+  first_name?: string;
+  last_name?: string;
+  business_name?: string;
   custom_fields?: Record<string, unknown>;
 }) => http.post<Contact>('/api/contacts', body).then((r) => r.data);
+
+export interface ContactImportItem {
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  business_name?: string;
+}
+
+export interface ImportResult {
+  imported: number;
+  skipped: number;
+}
+
+export const importContacts = (contacts: ContactImportItem[]) =>
+  http
+    .post<ImportResult>('/api/contacts/import', { contacts })
+    .then((r) => r.data);
 
 export const getContact = (id: number) =>
   http.get<Contact>(`/api/contacts/${id}`).then((r) => r.data);
@@ -75,6 +95,9 @@ export const patchContact = (
     registered_at?: string | null;
     unsubscribed?: boolean;
     name?: string;
+    first_name?: string;
+    last_name?: string;
+    business_name?: string;
     source?: string;
   },
 ) => http.patch<Contact>(`/api/contacts/${id}`, body).then((r) => r.data);
